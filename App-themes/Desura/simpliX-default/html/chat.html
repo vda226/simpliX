@@ -1,0 +1,893 @@
+<head> 
+	<title>Desura Chat</title>
+
+	<meta http-equiv="cache-control" content="no-cache" />
+	<meta http-equiv="pragma" content="no-cache" />
+	<meta http-equiv="expires" content="-1" />
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<link rel="stylesheet" type="text/css" media="screen, projection" href="../css/reset.css" />
+	<link rel="stylesheet" type="text/css" media="screen, projection" href="../css/screen.css" />
+	<link rel="stylesheet" type="text/css" media="screen, projection" href="../css/scrollbar.css" />
+	<link rel="stylesheet" type="text/css" media="screen, projection" href="../css/ui.achtung.css" />
+	<script type="text/javascript" src="../js/jquery.js"></script>
+	<script type="text/javascript" src="../js/jquery.template.js"></script>
+	<script type="text/javascript" src="../js/jquery.ui.achtung.js"></script>
+	<script src="../js/chat.js"></script>
+	<script>
+		var activeContacts = new Array();
+		
+		//! Type of page:
+		//! both: has both contact list and convo windows
+		//! convo: Convo window only
+		//! contacts: contacts only
+		var pageType = "both";
+		var activeSearch = 0;
+		
+		addDefaultTab = function(){
+			if ($('#chat_window_def').length > 0)
+				return;
+		
+			$('#rightWin ul.tabs').append(parseTemplate($('#chat_tab').html(), {id: 'def', name: 'No Chat Buddies'}));
+			$('#rightWin').append(parseTemplate($("#chat_window_empty").html(), {id: 'def'}));
+		};
+		
+		reloadTabs = function(){
+		
+			if (activeContacts.length == 0) {
+				addDefaultTab();
+			}		
+		
+			$('#rightWin ul.tabs a').click(function () {
+
+				$('#rightWin > div').hide().filter(this.hash).show();
+
+				$('#rightWin ul.tabs a').removeClass('on');
+				$(this).addClass('on');
+
+				return false;
+			}).filter(':first').click();
+
+			$( "#rightWin span.close_tab" ).click(function() {
+			
+				var id = $(this).attr("rel");
+				var index = activeContacts.indexOf(id);
+			
+				if (index != -1) {
+					removeArrayElement(activeContacts, index);
+				}
+			
+				$('#chat_window_' + id).remove();
+				$('#chat_window_li_' + id).remove();
+				
+				reloadTabs();
+			});			
+		};
+	
+		processMessage = function(msg, lastMsgTime){
+
+			res = "";
+			d = new Date(msg.time);
+		
+			if (lastMsgTime != null) {
+			
+				diff = d.getTime() - lastMsgTime.getTime();
+				
+				if (diff > (15*60*1000)) { 
+					res = parseTemplate($("#chat_timebreak").html(), {date: d, old: true, newline: true});
+				}
+			}
+			else {
+				res = parseTemplate($("#chat_timebreak").html(), {date: d, old: true, newline: false});
+			}
+				
+			if (msg.type == "message") {
+			
+				if (msg.fid == 0) {
+					res = parseTemplate($("#chat_message_me").html(), {message: msg.msg, old: true});						
+				}
+				else {
+					res = parseTemplate($("#chat_message_them").html(), {id: msg.fid, message: msg.msg, old: true});						
+				}				
+			}
+			else if (msg.type == "status" && msg.fid != 0){
+				res = parseTemplate($("#chat_status").html(), {id: msg.fid, message: msg.msg, old: true});				
+			}
+			else if (msg.type == "notify" && msg.fid != 0){
+				res = parseTemplate($("#chat_notify").html(), {id: msg.fid, message: msg.msg, old: true});				
+			}
+		
+			return res;
+		};
+		
+
+		
+		activateTab = function(id){
+		
+			if (activeContacts.length == 0) {
+				$('#chat_window_def').remove();
+				$('#chat_window_li_def').remove();
+			}			
+		
+			if (activeContacts.indexOf(id) == -1) {
+			
+				friend = getBuddie(id);
+			
+				if (friend == null)
+					return;
+			
+				$('#rightWin ul.tabs').append(parseTemplate($('#chat_tab').html(), {id: id, name: friend.getName()}));
+				$('#rightWin').append(parseTemplate($("#chat_window").html(), {id: id, history: friend.getChatHistory(id)}));
+			
+				activeContacts.push(id);
+				
+				reloadTabs();
+			}
+		};
+		
+
+		
+		sendCurrentMessage = function(id){
+			var text = $("#message_text_" + id).val();
+			
+			if (text.length == 0)
+				return;
+			
+			$("#chat_window_messages_" + id).append(processMessage({type: "message", fid: 0, time: new Date().toDateString(), msg: text}, null));
+			$("#message_text_" + id).val("");
+			
+			bud = getBuddie(id);
+			
+			if (bud)
+				bud.sendMessage(text);
+
+			$("#message_text_" + id).focus();
+			$("#chat_window_messages_" + id).attr({ scrollTop: $("#chat_window_messages_" + id).attr("scrollHeight") });			
+		}
+		
+		
+		
+		
+		doSearch = function(){
+		
+			field = $("#search_friend_select").val();
+			text = $("#search_friend_textbox").val();
+		
+			if (activeSearch != 0)
+				desura.chat.cancelSearch(activeSearch);
+				
+			obj = {};
+			obj[field] = text;
+				
+			activeSearch = desura.chat.instant.getInstant(1).search(obj);
+			$("#search_results").html(parseTemplate($("#search_searching_template").html(), {}));
+		};
+		
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//	events
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////		
+	
+		
+		onChatEvent = function(event){
+		
+			len = $("#chat_window_messages_" + event.fid).length;
+		
+			if (event.type != "message" && len == 0)
+				return;
+			else if (len == 0)
+				activateTab(event.fid.toString());
+		
+			$("#chat_window_messages_" + event.fid).append(processMessage(event, null));
+			
+			if (event.type == "message")
+				desura.chat.playBeep();			
+		};
+		
+		onFriendUpdate = function(){
+			$("#contact_list").html(parseTemplate($("#chat_groups").html(), {}));
+		};
+		
+		var lastTimerId = null;
+		
+		onInstantTimeout = function(timeLeft, id){
+		
+			i = desura.chat.instant.getInstant(1);
+			
+			if (timeLeft%5 && (i.isValid() == false || i.isConnected()))
+				return;
+			
+			if (timeLeft == 0) {
+				i.connect();
+				onInstantTimeout(5*60, id);
+			}
+			else {
+				m = Math.round(timeLeft/60);
+				s = Math.round(timeLeft%60);
+			
+				if (m != 0 && s != 0)
+					m -= 1;
+			
+				t = "";
+				
+				if (m != 0)
+					t +=  m + ".";
+					
+				if (s < 10)
+					t += "0" + s;
+				else 
+					t += s;
+			
+				$("#chat_reconect_time").text(t);
+				
+				arg = "onInstantTimeout(" + (timeLeft-1) + ", \""+ id + "\")";
+				lastTimerId = setTimeout(arg, 1000);
+			}
+		};
+		
+		onInstantUpdate = function(){
+			var i = desura.chat.instant.getInstant(1);
+		
+			if (i.isConnected()) {
+				$("#overlay_disconnect,#overlay").remove();
+			}
+			else {
+				$("body").prepend(parseTemplate($("#disconnect_overlay").html(), {}));
+				$("#overlay_disconnect").css("top", ($(window).height()-$("#overlay_disconnect").height())/2).css("left", ($(window).width()-$("#overlay_disconnect").width())/2).show();
+
+				$("#chat_reconnect_now").click(function(){
+					i.connect();
+					
+					clearTimeout(lastTimerId);
+					onInstantTimeout(5*60, i.getId());
+				});
+				
+				//dont retry right away
+				onInstantTimeout(30, i.getId());
+			}
+		};
+		
+		onProviderUpdate = function(){
+		
+		};
+		
+		displayAddFriendDialog = function(){
+	
+			remove = function(){
+			
+				if (activeSearch != 0)
+					desura.chat.cancelSearch(activeSearch);
+					
+				activeSearch = 0;
+				
+				$("#overlay_addfriend,#overlay").remove();
+			};
+			
+			instant = desura.chat.instant.getInstant(1);
+			searchFields = [];
+			
+			if (instant.isValid())
+				searchFields = instant.getSearchFields();			
+			
+			$("body").prepend(parseTemplate($("#add_friend_overlay").html(), {searchFields: searchFields}));
+
+			$("#overlay").click(remove);
+			$("#overlay_addfriend").css("top", ($(window).height()-$("#overlay_addfriend").height())/2).css("left", ($(window).width()-$("#overlay_addfriend").width())/2).show();
+
+			$("#overlay_addfriend .btnclose").click(remove);
+		};
+		
+		showChatTab = function(id){
+			activateTab(id);
+			$('#chat_window_li_' + id + ' a').click();				
+		};
+		
+		onSearchComplete = function(id){
+		
+			if (activeSearch != id) {
+				desura.chat.cancelSearch(id);
+				return;
+			}
+			
+			data = desura.chat.getSearchResults(id);
+		
+			if (data.error)
+				$("#search_results").html(parseTemplate($("#search_results_error").html(), {error: data.error}));
+			else
+				$("#search_results").html(parseTemplate($("#search_results_template").html(), {results: data}));
+				
+			activeSearch = 0;
+		};
+		
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		
+		$(document).ready(function() {
+		
+			$.each(getUrlVars(), function(){
+				if (this.key == "page")
+					pageType = this.value;
+			});
+		
+			if (pageType == "both" || pageType == "contacts") {
+			
+				$("#leftWin").html(parseTemplate($("#leftWin_template").html(), {}));
+			
+				if (pageType == "both")
+					$("#rightWin").html(parseTemplate($("#rightWin_template").html(), {}));
+				else
+					$("#rightWin").remove();
+				
+				$("#contact_list").html(parseTemplate($("#chat_groups").html(), {}));
+				$("#account_list").html(parseTemplate($("#account_item").html(), {}));
+				$("#contact_bottom_toolbar").html(parseTemplate($("#contact_bottom_toolbar_template").html(), {}));			
+			
+				$("td.contact_div").live("click", function() {
+					event.stopPropagation();
+					var id = $(this).attr("rel");
+				
+					if (pageType == "both")
+						showChatTab(id);
+					else 
+						desura.chat.showChatTab(id);	
+				});
+
+				$('#leftWin ul.tabs a').live( "click", function () {
+					var tabContainers = $('#leftWin > div');
+		
+					tabContainers.hide().filter(this.hash).show();
+
+					$('#leftWin ul.tabs a').removeClass('on');
+					$(this).addClass('on');
+
+					return false;
+				}).filter(':first').click();
+				
+				$('a.accept_friend_request').live('click', function(){
+					event.stopPropagation();
+					bud = desura.chat.buddie.getBuddie($(this).attr('rel'));
+					
+					if (bud == null || bud.isValid() == false)
+						return;
+						
+					bud.acceptRequest();
+				});
+				
+				$('a.reject_friend_request').live('click', function(){
+					event.stopPropagation();
+					bud = desura.chat.buddie.getBuddie($(this).attr('rel'));
+					
+					if (bud == null || bud.isValid() == false)
+						return;
+						
+					bud.rejectRequest();				
+				});
+				
+				$('a.resend_friend_request').live('click', function(){
+					event.stopPropagation();
+					bud = desura.chat.buddie.getBuddie($(this).attr('rel'));
+					
+					if (bud == null || bud.isValid() == false)
+						return;
+					
+					bud.sendRequest();				
+				});
+					
+			
+				$('#status_select').change(function(){
+					desura.chat.setStatus($(this).val());
+					desura.settings.setValue("gc_chat_status", $(this).val());
+				});			
+				
+				$('#status_set').click(function(){
+					desura.chat.setStatusMessage($('#status_message').val());
+					desura.settings.setValue("gc_chat_statusmsg", $('#status_message').val());
+				});
+				
+				$('#status_message').change(function(){
+					desura.chat.setStatusMessage($(this).val());
+					desura.utils.setCacheValue("chat_laststatus_msg", $(this).val());
+				});	
+
+				
+				$("td.contact_div").bind("contextmenu", function(event) {
+					return onChatBuddieContextMenu(event, desura.chat.buddie.getBuddie($(this).attr("rel")), showChatTab);
+				});				
+				
+				desura.events.chat.onProviderUpdate.register(onProviderUpdate, "all");
+				
+				desura.events.chat.onInstantUpdate.register(onInstantUpdate, "all");
+				desura.events.chat.onInstaceConnect.register(onInstantUpdate, "all");
+				desura.events.chat.onInstanceDisconnect.register(onInstantUpdate, "all");		
+
+				desura.events.chat.onBuddieListUpdate.register(onFriendUpdate, "all");
+				desura.events.chat.onBuddieUpdate.register(onFriendUpdate, "all");
+				
+				desura.events.chat.onToggleOfflineContacts.register(onFriendUpdate, "all");				
+			}
+			else if (pageType == "convo"){
+			
+				$("#leftWin").remove();
+				$("#rightWin").html(parseTemplate($("#rightWin_template").html(), {}));
+				
+			
+				desura.events.chat.onShowTab.register(showChatTab, "all");
+			}
+			
+			if (pageType == "both" || pageType == "convo"){
+				reloadTabs();
+
+				$("input.send_msg").live("click", function(){
+					sendCurrentMessage($(this).attr("rel"));
+				});
+				
+				$("input.send_msg_textbox").live("change", function(){
+					sendCurrentMessage($(this).attr("rel"));
+				});					
+			
+				desura.events.chat.onEvent.register(onChatEvent, "all");
+				desura.events.chat.onAddFriend.register(displayAddFriendDialog, "all");
+				desura.events.chat.onSearchComplete.register(onSearchComplete, "all");
+			}
+			
+			
+			$("#search_friend_button").live("click", function(){
+				doSearch();
+			});
+
+			$("#search_friend_textbox").live("change", function(){
+				doSearch();
+			});
+
+			$("input.search_friend_add").live("click", function(){
+				var id = $(this).attr("rel");
+				desura.chat.instant.getInstant("1").addBuddie(id);
+				$(this).attr("disabled", true);
+			});
+			
+			
+			onInstantUpdate();
+		});
+	</script>
+	
+	<style>
+		html, body 
+		{ 
+			height: 100%; 
+		}
+		
+		#rightWin li .ui-icon-close, #leftWin li .ui-icon-close { float: left; margin: 0.4em 0.2em 0 0; cursor: pointer; }
+		
+		
+		#rightWin, #leftWin {
+			margin: 10px;
+		}
+
+		#rightWin > div, #leftWin > div {
+			background-color: #2c2c2c;
+			border-radius: 0 2px 2px 2px;
+		}
+
+		#rightWin ul.tabs, #leftWin ul.tabs {
+			list-style: none;
+			margin: 0;
+			padding: 0;
+			position: relative;
+		}
+
+		#rightWin ul.tabs li, #leftWin ul.tabs li {
+			display: inline;
+			float: left;
+			margin-right: 5px;
+			position: relative;
+		}
+
+		#rightWin ul.tabs li a, #leftWin ul.tabs li a {
+			background-color: #212121;
+			border-radius: 2px 2px 0 0;
+			color: #666;
+			display: block;
+			font-size: 1.2em;
+			line-height: 1.5;
+			padding: 4px 10px;
+			text-decoration: none;
+			text-transform: uppercase;
+		}
+
+		#rightWin ul.tabs li a.on, #leftWin ul.tabs li a.on {
+			font-weight: bold;
+		}
+
+		#rightWin ul.tabs li a.on,
+		#rightWin ul.tabs li a:hover,
+		#leftWin ul.tabs li a.on,
+		#leftWin ul.tabs li a:hover		{
+			background-color: #2c2c2c;
+			color: #fff;
+		}		
+	</style>
+</head> 
+<body> 
+	<div id="leftWin" style="position:absolute;top: 5px; left: 5px; width: 300px; height: 95%;">
+	</div>
+	<div id="rightWin" style="position:absolute;top: 5px; left: 315px; width: 600px; height: 95%;">
+	</div>
+	
+	
+<script id="leftWin_template" type="text/html">
+	<ul class="tabs clear">
+		<li><a href="#contacts"><span>Contacts</span></a></li>
+		<li><a href="#accounts"><span>Accounts</span></a></li>
+	</ul>
+	<div id="contacts">
+		<div id="contact_list" style="overflow:auto;width: 300px; height: 85%;background: lime;">
+			<table>
+				<tr>
+					<td><div> </div></td>
+				</tr>
+			</table>
+		</div>
+		<div id="contact_bottom_toolbar" style="top: 5px; left: 5px; height: 44px; background: red;">
+		</div>
+	</div>
+	<div id="accounts">
+		<div id="account_list" style="height: 85%; background: navy;">
+			<table>
+				<tr>
+					<td><div> </div></td>
+				</tr>
+			</table>
+		</div>
+		<div id="accounts_bottom_toolbar" style="top: 5px; left: 5px; height: 44px; background: yellow;">
+		</div>		
+	</div>
+</script>
+
+<script id="rightWin_template" type="text/html">
+	<ul class="tabs clear">
+	</ul>
+	<div id="no_chat_buddie">
+	</div>	
+</script>	
+	
+	
+	
+<script id="chat_groups" type="text/html">
+	<table class="gameslist" cellpadding="0" cellspacing="0"  width=100%>
+		<# 
+			groups = getGroupList();
+			$.each(groups, function(name, friends){
+
+				var t = "#chat_friend";
+				friends = sortByName(friends);
+				
+		#>
+				<tbody class="groups">
+					<tr class="heading launch spacing">
+						<td class="colexpand"><a href="#"></a></td>
+						<td class="colname"><#= name #></td>
+					</tr>
+				</tbody>
+				<tbody class="mods expand" >
+					<# 
+						if (friends.length == 0){
+							#><#= parseTemplate($("#no_online_contacts").html(), {}) #><#
+						}
+						else {
+							count=0; 
+							for (friend in friends) 
+							{ 
+								friend = friends[friend];
+								
+								if (friend == null || friend.isValid() == false)
+									continue;
+
+								if (name == "Request") {
+									if (friend.getPendingRequest() == desura.chat.subscription.TO)
+										t = "#chat_friend_request_to";
+									else 
+										t = "#chat_friend_request_from";
+								}
+									
+									
+								count++; 
+						#>
+								<#= parseTemplate($(t).html(), {count: count, friend: friend}) #>
+						<# 
+							}
+						}
+					#>
+				</tbody>
+		<# 
+			}); 
+		#>	
+
+	</table>
+</script>			
+
+<script id="contact_bottom_toolbar_template" type="text/html">
+	<# 
+		lastStatus = desura.settings.getValue("gc_chat_status");
+		lastStatusMsg = desura.settings.getValue("gc_chat_statusmsg");
+		
+		statusValues = [
+			{i: "0", val: "Offline"},
+			{i: "1", val: "Online"},
+			{i: "2", val: "Away"},
+			{i: "3", val: "Busy"},
+			{i: "4", val: "Be Back Later"}
+		];
+		
+	#>
+	
+	<table>
+		<tbody class="status">
+			<tr>
+				<td>Status:</td>
+				<td><select style="width: 175px" id="status_select">
+				
+					<# $.each(statusValues, function(){ #>
+						<option value="<#= this.i #>" <#= this.i==lastStatus?"selected":"" #>><#= this.val #></option>
+					<# }); #>
+					</select>
+				</td>
+			</tr>
+			<tr>
+				<td>Message:</td>
+				<td><input type=textbox style="width: 175px" id="status_message" value="<#= lastStatusMsg #>"/><input type=button value="Set" id="status_set" /></td>
+			</tr>			
+		</tbody>
+	</table>
+</script>
+
+<script id="no_online_contacts" type="text/html">
+	<tr>
+		<td colspan=2 style="background:purple;">No Contacts Online</td>
+	</tr>
+</script>
+
+<script id="chat_friend" type="text/html">
+	<tr>
+		<td colspan=2 style="background: <#= (count%2)?'5f5f5f':'7f7f7f' #>;" rel="<#= friend.getId() #>" class="contact_div">
+			<table>
+				<tbody>
+					<tr class="contact">
+						<td rowspan=2>
+							<img src="<#= validateAvatar(friend.getAvatar()) #>" width=40 height=40 />
+							<img src="<#= getClientImage(friend.getProvider()) #>" width=10 height=10 style="position:relative;top: -2px; left: -14px;"/>
+						</td>
+						<td><#= friend.getName() #></td>
+					</tr>
+					<tr>
+						<td><#= getStatusString(friend.getStatus())#><#= friend.getStatusMessage()?' ('+friend.getStatusMessage()+')':'' #></td>
+					</tr>
+				</tbody>
+			</table>
+		</td>
+	</tr>
+</script>	
+
+<script id="chat_friend_request_from" type="text/html">
+	<tr>
+		<td colspan=2 style="background: <#= (count%2)?'5f5f5f':'7f7f7f' #>;" rel="<#= friend.getId() #>" >
+			<table>
+				<tbody>
+					<tr>
+						<td rowspan=2>
+							<img src="<#= validateAvatar(friend.getAvatar()) #>" width=40 height=40 />
+							<img src="<#= getClientImage(friend.getProvider()) #>" width=10 height=10 style="position:relative;top: -2px; left: -14px;"/>
+						</td>
+						<td><#= friend.getName() #></td>
+						<td><a href="#" class="accept_friend_request" rel="<#= friend.getId() #>">Accept Request</a></td>
+					</tr>
+					<tr>
+						<td></td>
+						<td><a href="#" class="reject_friend_request" rel="<#= friend.getId() #>">Reject Request</a></td>
+					</tr>
+				</tbody>
+			</table>
+		</td>
+	</tr>
+</script>	
+
+<script id="chat_friend_request_to" type="text/html">
+	<tr>
+		<td colspan=2 style="background: <#= (count%2)?'5f5f5f':'7f7f7f' #>;" rel="<#= friend.getId() #>" >
+			<table>
+				<tbody>
+					<tr>
+						<td rowspan=2>
+							<img src="<#= validateAvatar(friend.getAvatar()) #>" width=40 height=40 />
+							<img src="<#= getClientImage(friend.getProvider()) #>" width=10 height=10 style="position:relative;top: -2px; left: -14px;"/>
+						</td>
+						<td><#= friend.getName() #></td>
+						<td>(Waiting for reply)</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td><a href="#" class="resend_friend_request" rel="<#= friend.getId() #>">Resend Request</a></td>
+					</tr>
+				</tbody>
+			</table>
+		</td>
+	</tr>
+</script>
+
+<script id="account_item" type="text/html">
+	<# 
+		odd=true;
+		accounts = desura.chat.getChatInstants();
+		for(x in accounts) { 
+	
+		account = accounts[x];
+	#>
+			<div id="account_item_ " style="background: <#= odd?'yellow':'lightblue' #>;">
+				<table width=240 height=44>
+				<tbody>
+					<tr rel="<#= account.getId() #>" class="account">
+						<td rowspan=2><img src="http://www.w3schools.com/images/altova_mapforce_2011.gif" width=40 height=40 /></td>
+						<td><#= account.getName() #></td>
+					</tr>
+					<tr>
+						<td><#= account.isConnected()?'Connected':'Disconnected' #></td>
+					</tr>
+				</tbody>
+				</table>
+			</div>
+	<# odd=!odd; } #>
+</script>
+
+<script id="chat_tab" type="text/html">
+	<li id="chat_window_li_<#= id #>">
+		<a href="#chat_window_<#= id #>"><#= name #>  <span class="close_tab" rel="<#= id #>">X</span></a>
+		
+	</li>
+</script>
+
+<script id="chat_window" type="text/html">
+	<div id="chat_window_<#= id #>">
+		<div style="top: 5px; left: 5px; height: 85%; background: green;overflow:auto;" id="chat_window_messages_<#= id #>" >
+			<# 
+				lastMsgTime = null;
+				for (h in history) {
+				
+					h = history[h];
+				
+					if (h == null)
+						continue;
+					
+					#><#= processMessage(h, lastMsgTime) #><#
+					lastMsgTime = new Date(h.time);
+				}
+
+				if (lastMsgTime == null || new Date().getTime() - lastMsgTime.getTime() > (15*60*1000)) {
+					#><#= parseTemplate($("#chat_timebreak").html(), {date: new Date(), newline: lastMsgTime!=null, old: false}) #><#
+				}
+			#>
+		
+		
+		</div>
+		<div style="top: 5px; left: 5px; height: 44px; background: yellow;">
+			<input type=text size=100 height=22 id="message_text_<#= id #>" class="send_msg_textbox" rel="<#= id #>" />
+			<input type=button value="Send"	width=50 height=22 class="send_msg" rel="<#= id #>" />
+		</div>
+	</div>
+</script>
+
+<script id="chat_window_empty" type="text/html">
+	<div id="chat_window_<#= id #>">
+		<div style="top: 5px; left: 5px; height: 85%; background: gray;" />
+		<div style="top: 5px; left: 5px; height: 44px; background: yellow;" />
+	</div>
+</script>
+
+<script id="chat_timebreak" type="text/html">
+	<div class="chat_timebreak<#= old?'old':'' #>"><#= newline?'<br>':'' #><#= date.getHours()>24?date.getHours()-12:date.getHours() #>:<#= date.getMinutes() #><hr></div>
+</script>
+
+<script id="chat_status" type="text/html">
+	<div class="chat_status<#= old?'old':'' #>">(<#= message #>)</div>
+</script>
+
+<script id="chat_notify" type="text/html">
+	<div class="chat_notify<#= old?'old':'' #>">(<#= message #>)</div>
+</script>
+
+<script id="chat_message_me" type="text/html">
+	<div class="chat_message_me<#= old?'old':'' #>">Me: <#= message #></div>
+</script>
+
+<script id="chat_message_them" type="text/html">
+	<div class="chat_message_them<#= old?'old':'' #>"><#= getBuddie(id).getName() #>: <#= message #></div>
+</script>
+
+<script id="add_friend_overlay" type="text/html">
+<div id="overlay"></div>
+<div id="overlay_addfriend">
+	<div class="title">
+		<#= desura.utils.getLocalString("#CHAT_ADDFRIEND_TITLE") #>
+	</div>
+	<div class="content">
+		<div style="clear: both;"><br /></div>
+		<p class="heading"><#= desura.utils.getLocalString("#CHAT_ADDFRIEND_BYUSER") #></p>
+		<div style="clear: both;"><input type=TEXTBOX size=100 id="add_friend_textbox" /><input type=BUTTON value="Add" id="add_friend_button"></div>
+		
+		<p class="heading"><#= desura.utils.getLocalString("#CHAT_ADDFRIEND_SEARCH") #></p>
+		<div style="clear: both;">
+			<select id="search_friend_select">
+				<# for (f in searchFields){  f = searchFields[f]; #>
+					<option value="<#= f #>"><#= lookUpSearchName(f) #></option>
+				<# } #>
+			
+			</select>
+			<input type=TEXTBOX size=50 id="search_friend_textbox" />
+			<input type=BUTTON value="Search" id="search_friend_button">
+		</div>
+		<div style="clear: both; width:600px; height:200px; overflow:auto; background: blue;" id="search_results" >
+		</div>
+		<div style="clear: both;"><#= desura.utils.getLocalString("#CHAT_ADDFRIEND_NOTE", '<a href="http://www.desura.com/members">', '</a>') #></div>
+	</div>
+	<div class="buttons">
+		<input type="button" value="<#= desura.utils.getLocalString("#CLOSE") #>" class="minimal btnclose" />
+	</div>	
+</div>
+</script>
+
+<script id="search_searching_template" type="text/html">
+	<div>Searching ....</div>
+</script>
+
+<script id="search_results_error" type="text/html">
+	<div>Error: <#= error #></div>
+</script>
+
+<script id="search_results_template" type="text/html">
+	<table>
+		<tbody>
+			<# for (r in results) { r = results[r]; #>
+				<tr>
+					<# $.each(r.args, function(name, value){ #>
+						<td width=100><#= value #></td>
+					<# }); #>
+					<td>
+						<# 
+							var v = "#CHAT_SEARCH_ADD"; 
+							var e = true;
+							
+							if (r.pending) {
+								v = "#CHAT_SEARCH_PENDING";
+								e = false;							
+							}
+							else if (r.added) {
+								v = "#CHAT_SEARCH_ADDED";
+								e = false;
+							}
+						#>
+					
+						<input type=button value="<#= desura.utils.getLocalString(v) #>" class="search_friend_add" rel="<#= r.id #>" <#= e?"":"disabled=true" #>/>
+					</td>
+				</tr>
+			<# } #>
+		</tbody>
+	</table>
+</script>
+
+<script id="disconnect_overlay" type="text/html">
+	<div id="overlay">
+	</div>
+	<div id="overlay_disconnect">
+		<div class="title">
+			<#= desura.utils.getLocalString("#CHAT_DISCONNECT") #>
+		</div>
+		<div class="content">
+			<div style="clear: both;"><br /></div>
+			<p class="heading">
+				<#= desura.utils.getLocalString("#CHAT_DISCONNECT_MSG", "<span id=\"chat_reconect_time\"></span>", "<a href=\"#\" id=\"chat_reconnect_now\">", "</a>") #>
+			</p>
+			<div style="clear: both;"><br /></div>
+		</div>
+	</div>
+</script>
+
+
+</body>
+</html>

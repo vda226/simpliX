@@ -1,0 +1,55 @@
+V0.2
+---------
+ * Added an alternative glassy theme as a demo.
+ * Added documentation for the first release.
+
+V0.1.4
+---------
+ * Added the capability to drag windows from everywhere by consulting the sources of Oxygen, QtCurve and Bespin.
+ * Added workarounds for LibreOffice.
+ * Vertical dock titles are taken into account.
+ * Text eliding for titles of docks and QMdiSubWindows.
+ * Fixed falling back to the default configuration.
+ * Removed extra objects from the SVG image.
+ * Miscellaneous fixes. Now Kvantum is robust and almost ready to be publicly available :)
+
+V0.1.3
+---------
+ * Took care of orientation for all widgets by using appropriate transformations.
+ * To know the orientation of splitters, check their height and width instead of State_Horizontal.
+ * Added the possibility to attach the active tab to the tab widget.
+ * Added decorative indicators to splitters.
+ * Added grip indicators to scrollbar sliders.
+ * Removed animation as it wasn't practical.
+ * Removed the config interface since it didn't make configuration easier.
+
+V0.1.2
+---------
+ * sizeCalculated() can give wrong results in many cases, so use it only when needed.
+ * To force frames on view-items, adjust PM_FocusFrameHMargin and PM_FocusFrameVMargin (-> Qt4 -> qcommonstyle.cpp).
+ * Set SH_Menu_SloppySubMenus to true for being able to reach submenus by moving the cursor diagonally (bug #315346 at KDE Bugtracking System).
+ * Don't remove tab bottom frames; users could remove them if they want to.
+ * Fixed the transparency problem of scrollbars.
+ * Fixed tabbar scroll buttons by adjusting PM_TabBar_ScrollButtonOverlap and PM_TabBarScrollButtonWidth.
+ * Don't press a tool buttton if only its arrow is pressed.
+ * A separate pressed or focused (hover) state for each spin button.
+ * Treat arrows as icons for tool buttons.
+ * Don't draw the interior of a Plasma spinbox.
+ * Workaround for some Plasma tool buttons that pretend to have only icons. (why does Plasma sometimes take its style from the window style in the first place?)
+ * Workaround for some apps (like Kdenlive with its TimecodeDisplay) that presuppose all spinboxes should have vertical buttons.
+ * Fixed (Krita's) progress-spin boxes by checking the orientation of QProgressBars instead of checking State_Horizontal.
+ * Fixed some hidden bugs by consulting Qt's qcommonstyle.cpp.
+
+V0.1.1
+---------
+ * Added shortcut handler (mnemonics with Alt pressed) by consulting QtCurve's source.
+ * Fixed the problem of long texts with combo boxes.
+ * Took into account the height of checkbox/radio-button indicators for having a reasonable vertical distance between them.
+ * Fixed Akregator's tabs.
+ * Handled view-item texts inside buttons, like in Kate's font preferences.
+ * Took care of vertical buttons in some apps (like digiKam) by not using sizeCalculated().
+ * Other fixes.
+
+V0.1
+---------
+ * Kvantum is born as a fork of QuantumStyle. Many bugs are fixed and some missing widgets are added so that it is fairly usable now but there is still a lot of work to do.

@@ -1,0 +1,262 @@
+::-webkit-scrollbar {
+background-color:#fafafa !important;}
+
+::-webkit-scrollbar:vertical {
+width:4px !important;}
+
+::-webkit-scrollbar:horizontal {
+height:4px !important;}
+
+::-webkit-scrollbar-button:vertical {
+height:9px !important;
+background-color:#292929 !important;}
+
+::-webkit-scrollbar-button:vertical:disabled {
+background-color:#e04613 !important;}
+
+::-webkit-scrollbar-button:horizontal {
+width:9px !important;
+background-color:#292929 !important;}
+
+::-webkit-scrollbar-button:horizontal:disabled {
+background-color:#e04613 !important;}
+
+::-webkit-scrollbar-thumb:vertical {
+background-color:#e04613 !important;
+min-height:50px !important;}
+}
+::-webkit-scrollbar-thumb:vertical:hover {
+background-color:#e04613 !important;
+min-height:50px !important;}
+
+::-webkit-scrollbar-thumb:vertical:active {
+background-color:#e04613 !important;
+min-height:50px !important;}
+
+::-webkit-scrollbar-thumb:horizontal {
+background-color:#e04613 !important;
+min-height:50px !important;}
+
+::-webkit-scrollbar-thumb:horizontal:hover {
+background-color:#e04613 !important;
+min-height:50px !important;}
+
+::-webkit-scrollbar-thumb:horizontal:active {
+background-color:#e04613 !important;
+min-height:50px !important;}
+
+/*
+Desura-page
+*/
+
+input[type="button"],
+input[type="submit"],
+button,
+div.span-300 div.normalbox div.poll input.button,
+div.headerbox div.buttons a.menubuttonprimary,
+div.headerbox div.buttons a.menubuttonprimaryon,
+div.headerbox div.buttons a.menubuttonsecondary,
+div.headerbox div.buttons a.menubuttonsecondaryon {
+background:rgba(0, 0, 0, 0.2)!important;
+border:1px solid #141414!important;
+border-radius:0!important;
+font-weight:700!important;
+text-align:center!important;
+}
+
+input[type="button"]:hover,
+input[type="submit"]:hover,
+button:hover,
+div.span-300 div.normalbox div.poll input.button:hover,
+div.headerbox div.buttons a.menubutton:hover {
+background-color: #e04613!important;
+}
+
+input,
+select,
+textarea,
+select,
+select:not([size]):not([multiple]),
+select[size="0"],
+select[size="1"],
+option,
+input[type="password"],
+input[type="search"],
+isindex,
+div.normalbox form.filter input,
+div.normalbox form.filter select {
+padding: 1px!important;
+border:1px solid #141414!important;
+background-color:#444!important;
+color: #000!important;
+cursor: auto!important;
+}
+
+
+::selection {
+  background-color: #999!important;
+  color: #fff!important;
+}
+
+#content,
+body {
+  background-color: #292929!important;
+  background-image: none!important;
+}
+
+div.containerinner,
+div.headerbox div.headercorner,
+div.span-all div.normalcorner,
+div.span-all div.nocorner,
+div.headernormalbox ul.menu,
+div.communitybox div.body div.stats {
+  background-color: #292929!important;
+  background-image: none!important;
+  border: none!important;
+}
+
+div.normalbox div.body,
+div.span-300 div.normalbox div.body {
+  background-color: #1a1a1a!important;
+  border: 1px solid #141414!important;
+  color: #999!important;
+  margin-top: -1px!important;
+}
+
+div.normalbox ul.menu li.on {
+  background-color: #1a1a1a!important;
+  border-top: 3px solid #e04613!important;
+  border-right: 1px solid #141414!important;
+  border-left: 1px solid #141414!important;
+}
+
+div.normalbox ul.menu li.on a,
+div.normalbox div.table div.buttons {
+  background-color: #1a1a1a!important;
+}
+
+div.normalbox ul.menu a {
+  margin-right: -1px!important;
+  background-color: #212121!important;
+  border-top: 1px solid #141414!important;
+  border-right: 1px solid #141414!important;
+  border-left: 1px solid #141414!important;
+  margin-bottom: -2px!important;
+}
+
+div.normalbox div.tablegrid div.rowgrid {
+  border-left: none!important;
+}
+
+div.normalbox div.table div.row {
+  border-top: none!important;
+}
+
+div.normalbox div.tablegallery div.rowright {
+  margin-left: 0px!important;
+}
+
+#footer,
+div.communitybox div.body,
+div.rotatorholder,
+div.rotatorbox,
+div.rotatorbox a,
+div.rotator div.links{
+  display: none!important;
+}
+
+a,
+table.tableforum a,
+div.normalbox div.tablemenu div.row span.split a,
+div.span-300 div.normalbox a,
+div.normalbox div.tablegrid div.rowgrid h4 a,
+div.normalbox div.table div.rowlinks a,
+table.tablepost tr.post td.actions a,
+div.normalbox div.table div.content p {
+  color: #999!important;
+}
+
+div.normalbox div.tablemenu div.rowlist h5 {
+  color: #666!important;
+}
+
+a:hover,
+table.tableforum a:hover,
+div.normalbox div.tablemenu div.row span.split a:hover,
+div.span-300 div.normalbox a:hover,
+div.normalbox ul.menu li.on a,
+div.normalbox ul.menu li.on a:hover,
+div.normalbox div.tablegrid div.rowgrid h4 a:hover,
+div.normtable.tablepost tr.post td.actions a:hover,
+albox div.table div.rowlinks a:hover {
+  color: #fff!important;
+}
+
+div.normalbox form.filter,
+table.tablepost tr.post td.username,
+table.tablepost tr.post td.actions,
+table.tablepost tr.postmod td.details {
+  background-color: #1a1a1a!important;
+}
+
+table.tableforum thead th {
+  border: none!important;
+}
+
+table.tableforum tr.subcategory td.latest,
+table.tableforum tr.subcategory td.topics,
+table.tableforum tr.subcategory td.posts,
+table.tableforum tr.subcategory td.fav,
+table.tablethread tr.subcategory td.thread,
+table.tablethread tr.subcategory td.board,
+table.tablethread tr.subcategory td.lastpost,
+table.tablethread tr.subcategory td.deleted,
+table.tablethread tr.subcategory td.author {
+  border-left: 1px solid #141414!important;
+}
+
+table.tableforum tr.subcategory td,
+table.tablethread tr.subcategory td {
+  border-top: 1px solid #141414!important;
+}
+
+table.tablepost tr.post td.actions,
+table.tablepost tr.post td.post {
+  border-left: 1px solid #141414!important;
+}
+
+div.normalbox div.table div.rowsort {
+  border-bottom: 3px solid transparent!important;
+}
+
+div.pagination,
+div.pagination div.body {
+  background-color: #1a1a1a!important;
+  margin: 0px!important;
+}
+
+div.normalbox div.body div.quote {
+  border-left: 4px solid #666!important;
+}
+
+div.forumbox div.body table.tablepost div.quote span.quoteheading,
+div.normalbox div.body div.quote span.quoteheading {
+  border-bottom: 1px solid #666!important;
+}
+
+#cboxContent {
+margin-top: 0px!important;
+background: background: rgba(0, 0, 0, 0)!important;
+}
+
+div.logo {
+height: 22px!important;
+width: 0px!important;
+}
+
+div.logo div {
+background: #292929!important;
+height: 0px!important;
+top: 0px!important;
+width: 0px!important;
+}
