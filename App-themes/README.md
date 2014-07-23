@@ -1,6 +1,6 @@
 #####Howto:
 
-Just copy the "simpliX" folders to the theme dirs. (eg: $HOME/.themes/simpliX/Xfwm4)
+Just copy the "simpliX" folders to the theme dirs. (eg: $HOME/.themes/simpliX/xfce4-notify-4.0)
 
 #####Theme dirs:
 
