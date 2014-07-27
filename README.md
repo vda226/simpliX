@@ -1,4 +1,8 @@
-![alt text](https://raw.githubusercontent.com/sixsixfive/simpliX/master/prev.png "Preview")
+| ![alt text](https://raw.githubusercontent.com/sixsixfive/simpliX/master/prev.png "Preview") | ![alt text](https://raw.githubusercontent.com/sixsixfive/simpliX/master/all.png "Preview") |
+| ------------- |:-------------:|
+| GUI | almost all stuff |
+
+
 
 A very bright and simple (but daily useable) theme inspired by Elegant Brit
 
